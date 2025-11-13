@@ -2,7 +2,7 @@
 
 A modern, responsive to-do list application with built-in timers and task management features. Built with HTML, JavaScript, and styled using Tailwind CSS.
 
-[To-Do List Screenshot](images/screenshot.png)
+![To-Do List Screenshot](images/Screenshot.png)
 
 ## Features
 

@@ -17,21 +17,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const notificationOkBtn = document.getElementById('notification-ok-btn');
 
     // --- App State ---
-    let tasks = []; // Array to store task objects
-    // Example task: { id: Date.now(), text: 'My Task', minutes: 30, remainingSeconds: 1800, timerId: null, isRunning: false }
-    let audioContext; // For playing notification sound
-        let currentFilter = 'all'; // all | active | completed
+    let tasks = []; 
+    let audioContext; 
+    let currentFilter = 'all'; 
 
     // --- Functions ---
 
-    /**
-     * Renders all tasks in the task list.
-     */
     function renderTasks() {
-        // Clear existing list
         taskList.innerHTML = '';
 
-        // Apply filter
         const visibleTasks = tasks.filter(t => {
             if (currentFilter === 'active') return !t.completed;
             if (currentFilter === 'completed') return !!t.completed;
@@ -44,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Create and append each task item
         visibleTasks.forEach(task => {
             const li = document.createElement('li');
             li.className = 'bg-white p-4 rounded-lg shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4';
@@ -61,7 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
             checkbox.type = 'checkbox';
             checkbox.checked = !!task.completed;
             checkbox.className = 'h-5 w-5';
-            checkbox.setAttribute('aria-label', `Mark ${task.text} as completed`);
             checkbox.addEventListener('change', () => toggleComplete(task.id));
 
             const taskText = document.createElement('p');
@@ -85,7 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const buttonsDiv = document.createElement('div');
             buttonsDiv.className = 'flex-shrink-0 flex items-center gap-2';
 
-            // Timer Button
             if (task.minutes) {
                 const timerBtn = document.createElement('button');
                 timerBtn.className = `timer-btn font-medium py-2 px-4 rounded-lg text-sm ${task.isRunning ? 'btn-danger' : 'btn-success'}`;
@@ -94,21 +85,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 buttonsDiv.appendChild(timerBtn);
             }
 
-            // Edit Button
             const editBtn = document.createElement('button');
             editBtn.className = 'edit-btn btn-secondary font-medium py-2 px-4 rounded-lg text-sm';
             editBtn.textContent = 'Edit';
             editBtn.addEventListener('click', () => showEditModal(task.id));
             buttonsDiv.appendChild(editBtn);
 
-            // Delete Button
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'delete-btn btn-danger font-medium py-2 px-4 rounded-lg text-sm';
             deleteBtn.textContent = 'Delete';
             deleteBtn.addEventListener('click', () => handleDeleteTask(task.id));
             buttonsDiv.appendChild(deleteBtn);
 
-            // Completed badge when filtered to completed
             if (task.completed) {
                 const doneBadge = document.createElement('span');
                 doneBadge.className = 'ml-2 text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full';
@@ -121,25 +109,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-        /** Update visible count */
-        function updateCount() {
-            const countEl = document.getElementById('task-count');
-            if (!countEl) return;
-            countEl.textContent = tasks.length;
-        }
+    function updateCount() {
+        const countEl = document.getElementById('task-count');
+        if (!countEl) return;
+        countEl.textContent = tasks.length;
+    }
 
-        /** Toggle a task as completed */
-        function toggleComplete(id) {
-            const task = tasks.find(t => t.id === id);
-            if (!task) return;
-            task.completed = !task.completed;
-            saveTasksToStorage();
-            renderTasks();
-        }
+    function toggleComplete(id) {
+        const task = tasks.find(t => t.id === id);
+        if (!task) return;
+        task.completed = !task.completed;
+        saveTasksToStorage();
+        renderTasks();
+    }
 
-    /**
-     * Formats seconds into MM:SS string.
-     */
     function formatTime(totalSeconds) {
         if (totalSeconds < 0) totalSeconds = 0;
         const minutes = Math.floor(totalSeconds / 60);
@@ -147,15 +130,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     }
 
-    /**
-     * Handles adding a new task.
-     */
     function handleAddTask(event) {
         event.preventDefault();
         const text = taskTextInput.value.trim();
         const minutes = parseInt(taskMinutesInput.value, 10);
 
-        if (!text) return; // Don't add empty tasks
+        if (!text) return;
 
         const newTask = {
             id: Date.now(),
@@ -163,37 +143,29 @@ document.addEventListener('DOMContentLoaded', () => {
             minutes: isNaN(minutes) ? null : minutes,
             remainingSeconds: isNaN(minutes) ? null : minutes * 60,
             timerId: null,
-            isRunning: false
-                ,completed: false
+            endTime: null, // ★ NEW: To store when the timer finishes
+            isRunning: false,
+            completed: false
         };
 
         tasks.push(newTask);
-            saveTasksToStorage();
-            renderTasks();
+        saveTasksToStorage();
+        renderTasks();
 
-        // Clear form
         taskTextInput.value = '';
         taskMinutesInput.value = '';
     }
 
-    /**
-     * Handles deleting a task.
-     */
     function handleDeleteTask(id) {
-        // Stop timer if it's running
         const task = tasks.find(t => t.id === id);
         if (task && task.timerId) {
             clearInterval(task.timerId);
         }
-        
         tasks = tasks.filter(task => task.id !== id);
-            saveTasksToStorage();
+        saveTasksToStorage();
         renderTasks();
     }
 
-    /**
-     * Shows the edit modal and populates it.
-     */
     function showEditModal(id) {
         const task = tasks.find(t => t.id === id);
         if (!task) return;
@@ -203,20 +175,13 @@ document.addEventListener('DOMContentLoaded', () => {
         editTaskMinutes.value = task.minutes || '';
         
         editModal.classList.add('flex');
-            // focus management
-            editTaskText.focus();
+        editTaskText.focus();
     }
 
-    /**
-     * Hides the edit modal.
-     */
     function hideEditModal() {
         editModal.classList.remove('flex');
     }
 
-    /**
-     * Handles saving changes from the edit modal.
-     */
     function handleSaveEdit(event) {
         event.preventDefault();
         const id = parseInt(editTaskId.value, 10);
@@ -228,103 +193,92 @@ document.addEventListener('DOMContentLoaded', () => {
         const task = tasks.find(t => t.id === id);
         if (task) {
             task.text = newText;
-            
             const oldMinutes = task.minutes;
             const newMinutesValue = isNaN(newMinutes) ? null : newMinutes;
             
-            // If timer value changed, reset the timer
             if (oldMinutes !== newMinutesValue) {
-                if (task.timerId) {
-                    clearInterval(task.timerId); // Stop running timer
-                }
+                if (task.timerId) clearInterval(task.timerId);
                 task.minutes = newMinutesValue;
                 task.remainingSeconds = newMinutesValue ? newMinutesValue * 60 : null;
+                task.endTime = null; // Reset end time on edit
                 task.timerId = null;
                 task.isRunning = false;
             }
         }
 
         hideEditModal();
-            saveTasksToStorage();
-            renderTasks();
+        saveTasksToStorage();
+        renderTasks();
     }
 
-    /**
-     * Creates and plays a simple notification beep.
-     */
     function playNotificationSound() {
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
-        
-        // Resume context if it's suspended (e.g., due to autoplay policies)
         if (audioContext.state === 'suspended') {
             audioContext.resume();
         }
-
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
-
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
-
-        oscillator.type = 'sine'; // 'sine' is a much softer tone
-        oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // Lowered to 'A4' for a gentler pitch
-
-        // Create a shorter 1.5-second beep envelope
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
         const now = audioContext.currentTime;
         gainNode.gain.setValueAtTime(0, now);
-        gainNode.gain.linearRampToValueAtTime(0.5, now + 0.05); // Quick fade in (to a lower volume)
-        gainNode.gain.linearRampToValueAtTime(0, now + 1.5);   // Fade out over 1.5s
-
+        gainNode.gain.linearRampToValueAtTime(0.5, now + 0.05);
+        gainNode.gain.linearRampToValueAtTime(0, now + 1.5);
         oscillator.start(now);
         oscillator.stop(now + 1.5);
     }
 
-    /**
-     * Starts or stops the timer for a task.
-     */
+    // ★★★ FIXED: Start/Stop Logic using Timestamps ★★★
     function handleTimerToggle(id) {
         const task = tasks.find(t => t.id === id);
         if (!task || task.minutes === null) return;
 
         if (task.isRunning) {
-            // Stop the timer
+            // --- STOPPING ---
             clearInterval(task.timerId);
             task.timerId = null;
             task.isRunning = false;
+            task.endTime = null; // Clear the end time target because we are pausing
+            saveTasksToStorage(); // Save the current remainingSeconds
         } else {
-            // Start the timer
+            // --- STARTING ---
+            if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioContext.state === 'suspended') audioContext.resume();
             
-            // Initialize or resume AudioContext on user gesture (starting timer)
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            if (!task.remainingSeconds || task.remainingSeconds <= 0) {
+                task.remainingSeconds = task.minutes * 60;
             }
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
-            
-                // Ensure remainingSeconds is initialized
-                if (!task.remainingSeconds || task.remainingSeconds <= 0) {
-                    task.remainingSeconds = task.minutes * 60;
-                }
+
+            // Set the absolute End Time (Now + Remaining Seconds)
+            const now = Date.now();
+            task.endTime = now + (task.remainingSeconds * 1000);
+
             task.isRunning = true;
             task.timerId = setInterval(() => timerTick(id), 1000);
+            saveTasksToStorage(); // Save that we started and the endTime
         }
-            saveTasksToStorage();
-            renderTasks(); // Re-render to update button text
+        renderTasks();
     }
 
-    /**
-     * Runs every second for an active timer.
-     */
+    // ★★★ FIXED: Timer Tick Logic ★★★
     function timerTick(id) {
         const task = tasks.find(t => t.id === id);
         if (!task || !task.isRunning) return;
 
-        task.remainingSeconds--;
+        // Instead of just --, we calculate diff from endTime
+        const now = Date.now();
+        if (task.endTime) {
+            const diff = Math.ceil((task.endTime - now) / 1000);
+            task.remainingSeconds = diff;
+        } else {
+            // Fallback if something weird happens
+            task.remainingSeconds--; 
+        }
 
-        // Update the timer display in the DOM directly
         const taskElement = document.querySelector(`li[data-id="${id}"] .timer-display`);
         if (taskElement) {
             taskElement.textContent = `Time: ${formatTime(task.remainingSeconds)}`;
@@ -335,101 +289,118 @@ document.addEventListener('DOMContentLoaded', () => {
             clearInterval(task.timerId);
             task.timerId = null;
             task.isRunning = false;
-                task.remainingSeconds = task.minutes * 60; // Reset timer
-                // Optionally mark completed
-                task.completed = true;
+            task.endTime = null;
+            task.remainingSeconds = task.minutes * 60; 
+            task.completed = true;
 
-            playNotificationSound(); // Play the sound!
+            playNotificationSound();
             showNotificationModal(task.text);
-                saveTasksToStorage();
-                renderTasks(); // Re-render to reset button
+            saveTasksToStorage();
+            renderTasks();
         }
     }
     
-    /**
-     * Shows the time's up notification.
-     */
     function showNotificationModal(taskText) {
         notificationText.textContent = `Your time for "${taskText}" is up.`;
         notificationModal.classList.add('flex');
-            notificationOkBtn.focus();
+        notificationOkBtn.focus();
     }
 
-    /**
-     * Hides the time's up notification.
-     */
     function hideNotificationModal() {
         notificationModal.classList.remove('flex');
     }
 
-    // --- Event Listeners ---
     taskForm.addEventListener('submit', handleAddTask);
     editForm.addEventListener('submit', handleSaveEdit);
     editCancelBtn.addEventListener('click', hideEditModal);
     notificationOkBtn.addEventListener('click', hideNotificationModal);
 
-        // Keyboard: Escape to close modals
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                hideEditModal();
-                hideNotificationModal();
-            }
-        });
-
-        // Filters
-        const filterAllBtn = document.getElementById('filter-all');
-        const filterActiveBtn = document.getElementById('filter-active');
-        const filterCompletedBtn = document.getElementById('filter-completed');
-
-        function setFilter(filter) {
-            currentFilter = filter;
-            filterAllBtn.setAttribute('aria-pressed', filter === 'all');
-            filterActiveBtn.setAttribute('aria-pressed', filter === 'active');
-            filterCompletedBtn.setAttribute('aria-pressed', filter === 'completed');
-            renderTasks();
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            hideEditModal();
+            hideNotificationModal();
         }
+    });
 
-        filterAllBtn.addEventListener('click', () => setFilter('all'));
-        filterActiveBtn.addEventListener('click', () => setFilter('active'));
-        filterCompletedBtn.addEventListener('click', () => setFilter('completed'));
+    const filterAllBtn = document.getElementById('filter-all');
+    const filterActiveBtn = document.getElementById('filter-active');
+    const filterCompletedBtn = document.getElementById('filter-completed');
 
-        // --- Persistence ---
-        function saveTasksToStorage() {
-            try {
-                const copy = tasks.map(t => ({
-                    id: t.id,
-                    text: t.text,
-                    minutes: t.minutes,
-                    remainingSeconds: t.remainingSeconds,
-                    isRunning: false, // don't persist running state
-                    completed: !!t.completed
-                }));
-                localStorage.setItem('todo-tasks', JSON.stringify(copy));
-            } catch (err) {
-                console.warn('Could not save tasks', err);
-            }
+    function setFilter(filter) {
+        currentFilter = filter;
+        filterAllBtn.setAttribute('aria-pressed', filter === 'all');
+        filterActiveBtn.setAttribute('aria-pressed', filter === 'active');
+        filterCompletedBtn.setAttribute('aria-pressed', filter === 'completed');
+        renderTasks();
+    }
+
+    filterAllBtn.addEventListener('click', () => setFilter('all'));
+    filterActiveBtn.addEventListener('click', () => setFilter('active'));
+    filterCompletedBtn.addEventListener('click', () => setFilter('completed'));
+
+    function saveTasksToStorage() {
+        try {
+            const copy = tasks.map(t => ({
+                id: t.id,
+                text: t.text,
+                minutes: t.minutes,
+                remainingSeconds: t.remainingSeconds,
+                endTime: t.endTime, // ★ Save the endTime!
+                isRunning: t.isRunning, // Save running state so we know to resume on reload
+                completed: !!t.completed
+            }));
+            localStorage.setItem('todo-tasks', JSON.stringify(copy));
+        } catch (err) {
+            console.warn('Could not save tasks', err);
         }
+    }
 
-        function loadTasksFromStorage() {
-            try {
-                const raw = localStorage.getItem('todo-tasks');
-                if (!raw) return;
-                const parsed = JSON.parse(raw);
-                tasks = parsed.map(p => ({
+    // ★★★ FIXED: Load Logic to Resume Timers ★★★
+    function loadTasksFromStorage() {
+        try {
+            const raw = localStorage.getItem('todo-tasks');
+            if (!raw) return;
+            const parsed = JSON.parse(raw);
+            tasks = parsed.map(p => {
+                const task = {
                     id: p.id,
                     text: p.text,
                     minutes: p.minutes,
                     remainingSeconds: p.remainingSeconds,
+                    endTime: p.endTime || null,
                     timerId: null,
-                    isRunning: false,
+                    isRunning: false, // Start false, verify below
                     completed: !!p.completed
-                }));
-            } catch (err) {
-                console.warn('Could not load tasks', err);
-            }
-        }
+                };
 
-    // --- Initial Load & Render ---
+                // Check if this task was running and should resume
+                if (p.isRunning && p.endTime) {
+                    const now = Date.now();
+                    if (p.endTime > now) {
+                        // Timer is still valid, resume it!
+                        task.isRunning = true;
+                        // Recalculate remaining time instantly
+                        task.remainingSeconds = Math.ceil((p.endTime - now) / 1000);
+                        // Start the tick
+                        task.timerId = setInterval(() => timerTick(task.id), 1000);
+                    } else {
+                        // Timer expired while page was closed!
+                        task.remainingSeconds = 0;
+                        task.isRunning = false;
+                        task.endTime = null;
+                        task.completed = true;
+                        // Note: Sound won't play automatically on load due to browser policies, 
+                        // but we can show the state as done.
+                    }
+                }
+                
+                return task;
+            });
+        } catch (err) {
+            console.warn('Could not load tasks', err);
+        }
+    }
+
     loadTasksFromStorage();
     renderTasks();
 });
