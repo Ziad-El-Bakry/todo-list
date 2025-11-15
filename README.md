@@ -50,19 +50,46 @@ No build process or installation required! The project uses CDN-hosted dependenc
 - Task auto-marks as complete when timer finishes
 - Timer progress persists across page reloads
 
-## Keyboard Navigation
+### Keyboard Navigation
 
 - `Tab`: Navigate through interactive elements
 - `Space/Enter`: Activate buttons and toggles
 - `Escape`: Close active modals
 
-## Browser Support
+### Browser Support
 
 Works in all modern browsers that support:
 
 - localStorage
 - ES6+ JavaScript
 - Web Audio API (for notifications)
+
+ ## 🚀 Timer Logic Update (Summary) V2
+
+💡 The New Idea: Timestamp
+To solve these two problems, we changed the fundamental logic of the timer.
+
+Old System (Relative): It used to save "how many seconds are left." This value becomes incorrect as soon as the browser throttles the counter.
+
+New System (Absolute): We now save "the exact time the timer will end" (Example: 11:50:30 AM). This value is fixed and absolute.
+
+## 🔧 Technical Changes in Detail
+
+### 1. Added endTime to Task Data
+A new variable endTime was added to each task.
+
+endTime: Stores the timestamp (in milliseconds) of when the timer is supposed to end.
+
+It is null if the timer is paused.
+
+### 2. Modified "Start Timer" (handleTimerToggle - Start)
+When "Start" is pressed:
+
+We get the current time Date.now().
+
+We calculate the future end time: task.endTime = Date.now() + (task.remainingSeconds * 1000).
+
+We save the new endTime value to localStorage immediately.
 
 ## Development
 
